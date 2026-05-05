@@ -186,7 +186,7 @@ export class ItemManager {
 
   /**
    * Collects an item, removing it from the scene.
-   * Plays collection animation if provided.
+   * Plays collection animation with particle effects.
    */
   public collect(
     scene: Phaser.Scene,
@@ -201,6 +201,9 @@ export class ItemManager {
 
     // Mark as collected
     item.collected = true;
+
+    // Create particle burst for visual feedback
+    this.createCollectionParticles(scene, sprite.x, sprite.y);
 
     // Collection animation: scale up and fade out
     scene.tweens.add({
@@ -218,6 +221,36 @@ export class ItemManager {
 
     // Notify listeners
     this.onItemCollected?.(item);
+  }
+
+  /**
+   * Creates particle burst effect when item is collected.
+   */
+  private createCollectionParticles(scene: Phaser.Scene, x: number, y: number): void {
+    const particleCount = 8;
+    const colors = [0x00ff00, 0x00ff88, 0x88ffff, 0xffff00];
+
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (i / particleCount) * Math.PI * 2;
+
+      // Create particle sprite
+      const particle = scene.add.circle(x, y, 4, colors[i % colors.length]);
+      particle.setDepth(10);
+
+      // Animate particle flying outward
+      scene.tweens.add({
+        targets: particle,
+        x: x + Math.cos(angle) * 80,
+        y: y + Math.sin(angle) * 80,
+        alpha: 0,
+        scale: 0.5,
+        duration: 400,
+        ease: 'Quadratic.Out',
+        onComplete: () => {
+          particle.destroy();
+        },
+      });
+    }
   }
 
   /**

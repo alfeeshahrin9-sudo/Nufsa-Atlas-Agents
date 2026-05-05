@@ -34,8 +34,11 @@ export class GameScene extends Scene {
   /** Whether the game is paused (e.g., modal open) */
   private isPaused: boolean = false;
 
-  /** Ground layer graphics */
-  private groundGraphics: Phaser.GameObjects.Graphics | null = null;
+  /** Tilemap reference */
+  private tilemap: Phaser.Tilemaps.Tilemap | null = null;
+
+  /** Collision layer reference */
+  private collisionLayer: Phaser.Tilemaps.TilemapLayer | null = null;
 
   constructor() {
     super({ key: SceneKeys.Game });
@@ -89,111 +92,38 @@ export class GameScene extends Scene {
   }
 
   /**
-   * Creates the game map with collision.
+   * Creates the game map from Tiled tilemap.
    */
   private createMap(): void {
-    const width = this.scale.width;
-    const height = this.scale.height;
-    const tileSize = 32;
-    const cols = Math.ceil(width / tileSize);
-    const rows = Math.ceil(height / tileSize);
+    // Load the Tiled map
+    this.tilemap = this.make.tilemap({ key: 'japan-map' });
+    const tileset = this.tilemap.addTilesetImage('tiles-japan', 'tiles-japan');
 
-    // Create background
-    const bg = this.add.rectangle(width / 2, height / 2, width, height, 0x2a2a3e);
-    bg.setDepth(-10);
-
-    // Create ground layer (tatami mat pattern)
-    this.groundGraphics = this.add.graphics();
-    this.groundGraphics.setDepth(-5);
-
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const x = col * tileSize;
-        const y = row * tileSize;
-
-        // Check if this is an edge tile (wall)
-        const isEdge = row === 0 || row === rows - 1 || col === 0 || col === cols - 1;
-
-        if (isEdge) {
-          // Wall/border
-          this.groundGraphics.fillStyle(0x1a1a2e, 1);
-          this.groundGraphics.fillRect(x, y, tileSize, tileSize);
-          this.groundGraphics.lineStyle(2, 0x3a3a4e);
-          this.groundGraphics.strokeRect(x, y, tileSize, tileSize);
-        } else {
-          // Floor (tatami style)
-          this.groundGraphics.fillStyle(0x3a3a4e, 1);
-          this.groundGraphics.fillRect(x, y, tileSize, tileSize);
-          this.groundGraphics.lineStyle(1, 0x4a4a5e, 0.5);
-          this.groundGraphics.strokeRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
-        }
-      }
+    if (!tileset) {
+      console.error('Failed to add tileset image');
+      return;
     }
 
-    // Create furniture (collision objects)
-    this.createFurniture();
-  }
+    // Create all visible layers (Ground, Buildings, Behind are background)
+    const groundLayer = this.tilemap.createLayer('Ground', tileset, 0, 0);
+    const behindLayer = this.tilemap.createLayer('Behind', tileset, 0, 0);
+    const buildingsLayer = this.tilemap.createLayer('Buildings', tileset, 0, 0);
+    const decorationsLayer = this.tilemap.createLayer('Decorations', tileset, 0, 0);
 
-  /**
-   * Creates furniture and obstacles with collision.
-   */
-  private createFurniture(): void {
-    const furnitureGraphics = this.add.graphics();
-    furnitureGraphics.setDepth(0);
+    // Set depths for proper layering
+    if (groundLayer) groundLayer.setDepth(-2);
+    if (behindLayer) behindLayer.setDepth(10);
+    if (buildingsLayer) buildingsLayer.setDepth(0);
+    if (decorationsLayer) decorationsLayer.setDepth(1);
 
-    // Table (top left area)
-    furnitureGraphics.fillStyle(0x5a4a3a, 1);
-    furnitureGraphics.fillRect(200, 150, 120, 80);
-    furnitureGraphics.lineStyle(2, 0x3a2a1a);
-    furnitureGraphics.strokeRect(200, 150, 120, 80);
-
-    // Cabinet (top right)
-    furnitureGraphics.fillStyle(0x4a3a2a, 1);
-    furnitureGraphics.fillRect(700, 100, 100, 150);
-    furnitureGraphics.lineStyle(2, 0x2a1a0a);
-    furnitureGraphics.strokeRect(700, 100, 100, 150);
-
-    // Screen/divider (middle right)
-    furnitureGraphics.fillStyle(0x6a5a4a, 1);
-    furnitureGraphics.fillRect(850, 300, 40, 200);
-
-    // Low table (center)
-    furnitureGraphics.fillStyle(0x5a4a3a, 1);
-    furnitureGraphics.fillRect(450, 400, 100, 60);
-
-    // Chairs/stools
-    furnitureGraphics.fillStyle(0x4a3a2a, 1);
-    furnitureGraphics.fillRect(350, 250, 50, 50);
-    furnitureGraphics.fillRect(550, 250, 50, 50);
-
-    // Create collision zones for furniture
-    this.createCollisionZones([
-      { x: 200, y: 150, w: 120, h: 80 },   // Table
-      { x: 700, y: 100, w: 100, h: 150 },  // Cabinet
-      { x: 850, y: 300, w: 40, h: 200 },   // Screen
-      { x: 450, y: 400, w: 100, h: 60 },   // Low table
-      { x: 350, y: 250, w: 50, h: 50 },    // Chair 1
-      { x: 550, y: 250, w: 50, h: 50 },    // Chair 2
-    ]);
-  }
-
-  /**
-   * Creates invisible collision zones.
-   */
-  private createCollisionZones(zones: { x: number; y: number; w: number; h: number }[]): void {
-    // Create a group for collision detection
-    const staticGroup = this.physics.add.staticGroup();
-
-    for (const zone of zones) {
-      // Create invisible rectangle for collision
-      const body = this.add.rectangle(zone.x + zone.w / 2, zone.y + zone.h / 2, zone.w, zone.h);
-      body.setVisible(false);
-      this.physics.add.existing(body, true); // true = static body
-      staticGroup.add(body);
+    // Create collision layer from the Collision layer (tile ID 1311 = collision)
+    this.collisionLayer = this.tilemap.createLayer('Collision', tileset, 0, 0);
+    if (this.collisionLayer) {
+      this.collisionLayer.setVisible(false); // Hide collision layer
+      this.collisionLayer.setCollisionByProperty({ collides: true });
+      // Set all non-zero tiles as collision (tile ID 1311)
+      this.collisionLayer.setCollisionByExclusion([-1, 0]);
     }
-
-    // Store reference for player collision
-    (this as any).collisionZones = staticGroup;
   }
 
   /**
@@ -201,15 +131,15 @@ export class GameScene extends Scene {
    */
   private createPlayer(): void {
     this.player = new PlayerController(this, {
-      startX: 80,
-      startingY: 80,
+      startX: 300,
+      startingY: 300,
       speed: 150,
       spriteKey: 'player',
     });
 
-    // Add collision with furniture
-    if ((this as any).collisionZones) {
-      this.physics.add.collider(this.player.sprite, (this as any).collisionZones);
+    // Add collision with tilemap collision layer
+    if (this.collisionLayer) {
+      this.physics.add.collider(this.player.sprite, this.collisionLayer);
     }
   }
 
@@ -360,6 +290,5 @@ export class GameScene extends Scene {
     this.itemManager?.destroy();
     this.ui?.destroy();
     this.audio.stopMusic();
-    this.groundGraphics?.destroy();
   }
 }

@@ -185,6 +185,7 @@ export enum SceneKeys {
 export enum AssetKeys {
   // Maps
   JapanMap = 'japan-map',
+  JapanTileset = 'tiles-japan',
 
   // Character
   Player = 'player',

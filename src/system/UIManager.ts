@@ -49,7 +49,7 @@ export class UIManager {
     const screenWidth = scene.scale.width;
 
     this.timerText = scene.add.text(screenWidth / 2, 20, '5:00', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial, sans-serif',
       fontSize: '32px',
       color: '#ffffff',
       stroke: '#000000',
@@ -80,7 +80,7 @@ export class UIManager {
 
     // Title
     const title = scene.add.text(20, panelY + 10, 'EVIDENCE', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial, sans-serif',
       fontSize: '14px',
       color: '#8888aa',
       fontStyle: 'bold',
@@ -125,7 +125,7 @@ export class UIManager {
       // Item name text
       const shortName = item.name.length > 10 ? item.name.substring(0, 9) + '…' : item.name;
       const nameText = scene.add.text(4, 4, shortName, {
-        fontFamily: 'Arial',
+        fontFamily: 'GameFont, Arial, sans-serif',
         fontSize: '11px',
         color: item.collected ? '#00ff00' : '#888888',
         fontStyle: item.collected ? 'bold' : 'normal',
@@ -133,7 +133,7 @@ export class UIManager {
 
       // Checkmark (visible when collected)
       const checkmark = scene.add.text(75, 2, item.collected ? '✓' : '', {
-        fontFamily: 'Arial',
+        fontFamily: 'GameFont, Arial, sans-serif',
         fontSize: '16px',
         color: '#00ff00',
         fontStyle: 'bold',
@@ -214,14 +214,28 @@ export class UIManager {
     this.magnifierBtn.setDepth(1001);
     this.magnifierBtn.setScrollFactor(0);
 
-    // Press animation
+    // Press animation with feedback
     this.magnifierBtn.on('pointerdown', () => {
+      // Button press animation
       scene.tweens.add({
         targets: this.magnifierBtn,
-        scale: 0.9,
-        duration: 100,
+        scale: 0.85,
+        duration: 80,
+        yoyo: true,
+        ease: 'Back.easeOut',
+      });
+
+      // Optional subtle screen shake
+      const camera = scene.cameras.main;
+      scene.tweens.add({
+        targets: camera,
+        scrollX: camera.scrollX + Phaser.Math.Between(-2, 2),
+        scrollY: camera.scrollY + Phaser.Math.Between(-2, 2),
+        duration: 50,
+        repeat: 1,
         yoyo: true,
       });
+
       this.onMagnifierPressed?.();
     });
 
@@ -245,15 +259,29 @@ export class UIManager {
 
   /**
    * Updates the magnifier glow effect.
-   * Call every frame.
+   * Creates a pulsing aura when item is in range.
    */
   public updateMagnifierGlow(time: number): void {
     if (!this.magnifierGlow || !this.magnifierBtn) return;
 
     if (this.shouldGlow) {
       this.magnifierGlow.clear();
-      this.magnifierGlow.fillStyle(0x00ff00, 0.3 + Math.sin(time / 200) * 0.1);
-      this.magnifierGlow.fillCircle(this.magnifierBtn.x, this.magnifierBtn.y, 50);
+
+      // Multi-layer glow with pulsing effect
+      const pulse = 0.3 + Math.sin(time / 150) * 0.15;
+      const brightness = 0.2 + Math.sin(time / 250) * 0.1;
+
+      // Outer glow (larger, dimmer)
+      this.magnifierGlow.fillStyle(0x00ff00, brightness * 0.4);
+      this.magnifierGlow.fillCircle(this.magnifierBtn.x, this.magnifierBtn.y, 65);
+
+      // Middle glow (medium, brighter)
+      this.magnifierGlow.fillStyle(0x00ff00, brightness * 0.6);
+      this.magnifierGlow.fillCircle(this.magnifierBtn.x, this.magnifierBtn.y, 55);
+
+      // Inner glow (bright, tight)
+      this.magnifierGlow.fillStyle(0x00ff00, pulse);
+      this.magnifierGlow.fillCircle(this.magnifierBtn.x, this.magnifierBtn.y, 45);
     } else {
       this.magnifierGlow.clear();
     }
@@ -332,7 +360,7 @@ export class UIManager {
 
     // Item name
     this.modalName = scene.add.text(panelX + 20, panelY + 20, '', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial, sans-serif',
       fontSize: '24px',
       color: '#ffffff',
       fontStyle: 'bold',
@@ -340,7 +368,7 @@ export class UIManager {
 
     // Description
     this.modalDescription = scene.add.text(panelX + 20, panelY + 60, '', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial, sans-serif',
       fontSize: '16px',
       color: '#cccccc',
       wordWrap: { width: panelWidth - 40 },
@@ -349,7 +377,7 @@ export class UIManager {
 
     // Close button
     const closeBtn = scene.add.text(panelX + panelWidth - 40, panelY + 10, '✕', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial, sans-serif',
       fontSize: '24px',
       color: '#888888',
     });
@@ -388,13 +416,15 @@ export class UIManager {
     this.modalDescription.setText(item.description);
     this.modalContainer.setVisible(true);
 
-    // Fade in animation
+    // Fade and scale in animation
     this.modalContainer.setAlpha(0);
+    this.modalContainer.setScale(0.8);
     scene.tweens.add({
       targets: this.modalContainer,
       alpha: 1,
-      duration: 200,
-      ease: 'Power2',
+      scale: 1,
+      duration: 250,
+      ease: 'Back.easeOut',
     });
   }
 
@@ -407,8 +437,9 @@ export class UIManager {
     scene.tweens.add({
       targets: this.modalContainer,
       alpha: 0,
-      duration: 150,
-      ease: 'Power2',
+      scale: 0.8,
+      duration: 200,
+      ease: 'Back.easeIn',
       onComplete: () => {
         this.modalContainer?.setVisible(false);
       },
@@ -431,7 +462,7 @@ export class UIManager {
     // Message
     const message = won ? 'CASE SOLVED!' : "TIME'S UP!";
     const messageText = scene.add.text(screenWidth / 2, screenHeight / 2 - 40, message, {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial, sans-serif',
       fontSize: '48px',
       color: won ? '#00ff00' : '#ff4444',
       fontStyle: 'bold',
@@ -444,7 +475,7 @@ export class UIManager {
 
     // Score
     const scoreText = scene.add.text(screenWidth / 2, screenHeight / 2 + 30, `Found ${itemsFound}/${totalItems} items`, {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial, sans-serif',
       fontSize: '24px',
       color: '#ffffff',
       stroke: '#000000',

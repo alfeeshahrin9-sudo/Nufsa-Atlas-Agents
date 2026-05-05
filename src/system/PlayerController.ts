@@ -27,7 +27,7 @@ export class PlayerController {
   constructor(scene: Phaser.Scene, config: PlayerConfig) {
     // Create player sprite
     this.sprite = scene.add.sprite(config.startX, config.startingY, config.spriteKey);
-    this.sprite.setDepth(10); // Render above tiles
+    this.sprite.setDepth(0); // Render above tiles
     this.sprite.setOrigin(0.5, 0.5);
 
     // Initialize state
@@ -199,8 +199,8 @@ export class PlayerController {
 
     // Keep player in bounds
     const bounds = {
-      x: Phaser.Math.Clamp(this.sprite.x, 40, 984),
-      y: Phaser.Math.Clamp(this.sprite.y, 40, 690),
+      x: Phaser.Math.Clamp(this.sprite.x, 0, 1024),
+      y: Phaser.Math.Clamp(this.sprite.y, 0, 768),
     };
     this.sprite.setPosition(bounds.x, bounds.y);
   }

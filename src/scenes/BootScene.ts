@@ -22,7 +22,7 @@ export class BootScene extends Scene {
       this.scale.height / 2 - 50,
       'Loading...',
       {
-        fontFamily: 'Arial',
+        fontFamily: 'GameFont, Arial, sans-serif',
         fontSize: '24px',
         color: '#ffffff',
       }
@@ -62,11 +62,14 @@ export class BootScene extends Scene {
     // Store cases config
     this.casesConfig = casesData;
 
-    // Try to load assets (will fall back to placeholders if missing)
-    this.load.image('japan-tiles', 'assets/tiles/japan-tiles.png');
+    // Load Tiled map and tileset
+    this.load.tilemapTiledJSON('japan-map', 'assets/maps/map-japan.json');
+    this.load.image('tiles-japan', 'assets/tiles/tiles-japan.png');
+
+    // Load player spritesheet
     this.load.spritesheet('player', 'assets/character/detective.png', {
-      frameWidth: 32,
-      frameHeight: 32,
+      frameWidth: 28,
+      frameHeight: 28,
     });
 
     // Audio is optional - try to load but don't fail if missing

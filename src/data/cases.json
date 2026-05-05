@@ -1,0 +1,91 @@
+{
+  "japan": {
+    "location": "Kyoto, Japan",
+    "timeLimitSeconds": 300,
+    "requiredItems": 10,
+    "mapKey": "japan-map",
+    "ambientAudioKey": "ambient-japan",
+    "items": [
+      {
+        "id": "yukata",
+        "name": "Bloody Yukata",
+        "description": "A white kimono with dark crimson stains on the sleeve. The fabric is torn near the hem.",
+        "position": { "x": 640, "y": 480 },
+        "spriteKey": "item_yukata",
+        "collected": false
+      },
+      {
+        "id": "katana",
+        "name": "Rusted Katana",
+        "description": "An old samurai sword covered in rust. The handle wrapping has come loose.",
+        "position": { "x": 320, "y": 240 },
+        "spriteKey": "item_katana",
+        "collected": false
+      },
+      {
+        "id": "matcha",
+        "name": "Spilled Matcha",
+        "description": "A broken tea bowl with green powder scattered across the tatami.",
+        "position": { "x": 480, "y": 360 },
+        "spriteKey": "item_matcha",
+        "collected": false
+      },
+      {
+        "id": "fan",
+        "name": "Torn Paper Fan",
+        "description": "A decorative fan with cherry blossom patterns. Several ribs are broken.",
+        "position": { "x": 720, "y": 200 },
+        "spriteKey": "item_fan",
+        "collected": false
+      },
+      {
+        "id": "mask",
+        "name": "Kitsune Mask",
+        "description": "A fox mask with cracks running through the left eye. Dried flowers are tucked into the straps.",
+        "position": { "x": 200, "y": 500 },
+        "spriteKey": "item_mask",
+        "collected": false
+      },
+      {
+        "id": "scroll",
+        "name": "Burnt Scroll",
+        "description": "An ancient scroll with singed edges. The calligraphy is barely legible.",
+        "position": { "x": 560, "y": 580 },
+        "spriteKey": "item_scroll",
+        "collected": false
+      },
+      {
+        "id": "coin",
+        "name": "Gold Koban",
+        "description": "A rare Edo-period gold coin. Someone has scratched a symbol into the surface.",
+        "position": { "x": 400, "y": 160 },
+        "spriteKey": "item_coin",
+        "collected": false
+      },
+      {
+        "id": "hairpin",
+        "name": "Jade Hairpin",
+        "description": "An ornate hairpin with a jade flower. One petal is chipped.",
+        "position": { "x": 800, "y": 420 },
+        "spriteKey": "item_hairpin",
+        "collected": false
+      },
+      {
+        "id": "bell",
+        "name": "Temple Bell",
+        "description": "A small bronze bell from a shrine. The clapper is missing.",
+        "position": { "x": 280, "y": 600 },
+        "spriteKey": "item_bell",
+        "collected": false
+      },
+      {
+        "id": "dagger",
+        "name": "Ceremonial Dagger",
+        "description": "A ritual knife with an ivory handle. Dark residue stains the blade.",
+        "position": { "x": 600, "y": 320 },
+        "spriteKey": "item_dagger",
+        "collected": false
+      }
+    ]
+  }
+}

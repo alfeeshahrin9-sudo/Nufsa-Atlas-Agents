@@ -156,6 +156,11 @@ export class GameScene extends Scene {
     this.ui!.onMagnifierPressed = () => {
       this.onMagnifierPressed();
     };
+
+    // Modal state callback
+    this.ui!.onModalStateChanged = (isOpen: boolean) => {
+      this.isPaused = isOpen;
+    };
   }
 
   /**

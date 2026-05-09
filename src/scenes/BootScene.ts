@@ -22,7 +22,7 @@ export class BootScene extends Scene {
       this.scale.height / 2 - 50,
       'Loading...',
       {
-        fontFamily: 'GameFont, Arial, sans-serif',
+        fontFamily: 'Arial',
         fontSize: '24px',
         color: '#ffffff',
       }

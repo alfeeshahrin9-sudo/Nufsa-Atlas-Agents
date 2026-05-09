@@ -13,11 +13,6 @@
 
   <!-- Prevent default touch actions -->
   <style>
-    @font-face {
-      font-family: 'GameFont';
-      src: url('/assets/fonts/font.otf') format('opentype');
-    }
-
     * {
       margin: 0;
       padding: 0;
@@ -33,21 +28,19 @@
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
-      font-family: 'GameFont', Arial, sans-serif;
     }
 
     #app {
       width: 100%;
       height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      position: relative;
     }
 
     /* Disable context menu on right-click */
     canvas {
       touch-action: none;
       -webkit-touch-callout: none;
+      display: block;
     }
   </style>
 

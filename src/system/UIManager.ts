@@ -27,6 +27,9 @@ export class UIManager {
   /** Callback when magnifier is pressed */
   public onMagnifierPressed?: () => void;
 
+  /** Callback when modal is shown/hidden (for pause control) */
+  public onModalStateChanged?: (isOpen: boolean) => void;
+
   /** Whether the magnifier should glow (item in range) */
   private shouldGlow: boolean = false;
 
@@ -49,7 +52,7 @@ export class UIManager {
     const screenWidth = scene.scale.width;
 
     this.timerText = scene.add.text(screenWidth / 2, 20, '5:00', {
-      fontFamily: 'GameFont, Arial, sans-serif',
+      fontFamily: 'Arial',
       fontSize: '32px',
       color: '#ffffff',
       stroke: '#000000',
@@ -80,7 +83,7 @@ export class UIManager {
 
     // Title
     const title = scene.add.text(20, panelY + 10, 'EVIDENCE', {
-      fontFamily: 'GameFont, Arial, sans-serif',
+      fontFamily: 'Arial',
       fontSize: '14px',
       color: '#8888aa',
       fontStyle: 'bold',
@@ -125,7 +128,7 @@ export class UIManager {
       // Item name text
       const shortName = item.name.length > 10 ? item.name.substring(0, 9) + '…' : item.name;
       const nameText = scene.add.text(4, 4, shortName, {
-        fontFamily: 'GameFont, Arial, sans-serif',
+        fontFamily: 'Arial',
         fontSize: '11px',
         color: item.collected ? '#00ff00' : '#888888',
         fontStyle: item.collected ? 'bold' : 'normal',
@@ -133,15 +136,16 @@ export class UIManager {
 
       // Checkmark (visible when collected)
       const checkmark = scene.add.text(75, 2, item.collected ? '✓' : '', {
-        fontFamily: 'GameFont, Arial, sans-serif',
+        fontFamily: 'Arial',
         fontSize: '16px',
         color: '#00ff00',
         fontStyle: 'bold',
       });
 
       entryContainer.add([bg, nameText, checkmark]);
-      entryContainer.setSize(85, 28);
-      entryContainer.setInteractive(new Phaser.Geom.Rectangle(0, 0, 85, 28), Phaser.Geom.Rectangle.Contains);
+
+      // Make the bg rectangle interactive directly (reliable hit area)
+      bg.setInteractive({ useHandCursor: true });
 
       // Store entry reference
       const entry: ItemListEntry = {
@@ -153,15 +157,15 @@ export class UIManager {
       this.itemEntries.set(item.id, entry);
 
       // Click handler - show description modal
-      entryContainer.on('pointerdown', () => {
+      bg.on('pointerdown', () => {
         this.showModal(scene, item);
       });
 
       // Hover effect
-      entryContainer.on('pointerover', () => {
+      bg.on('pointerover', () => {
         bg.setFillStyle(0x3a3a4e);
       });
-      entryContainer.on('pointerout', () => {
+      bg.on('pointerout', () => {
         bg.setFillStyle(0x2a2a3e);
       });
 
@@ -186,11 +190,12 @@ export class UIManager {
     this.magnifierGlow.setDepth(998);
     this.magnifierGlow.setScrollFactor(0);
 
-    // Button background circle
+    // Button background circle - this is the interactive visual element
     const btnBg = scene.add.circle(btnX, btnY, btnSize / 2, 0x4a4a6a);
     btnBg.setStrokeStyle(3, 0x8888aa);
     btnBg.setDepth(999);
     btnBg.setScrollFactor(0);
+    btnBg.setInteractive({ useHandCursor: true });
 
     // Magnifier icon (simple circle with handle)
     const iconGroup = scene.add.container(btnX, btnY);
@@ -207,47 +212,29 @@ export class UIManager {
     iconGroup.setDepth(1000);
     iconGroup.setScrollFactor(0);
 
-    // Create main button container
-    this.magnifierBtn = scene.add.container(btnX, btnY);
-    this.magnifierBtn.setSize(btnSize, btnSize);
-    this.magnifierBtn.setInteractive(new Phaser.Geom.Circle(0, 0, btnSize / 2), Phaser.Geom.Circle.Contains);
-    this.magnifierBtn.setDepth(1001);
-    this.magnifierBtn.setScrollFactor(0);
+    // Track magnifier as the visual circle (used for glow positioning)
+    this.magnifierBtn = iconGroup;
 
-    // Press animation with feedback
-    this.magnifierBtn.on('pointerdown', () => {
-      // Button press animation
+    // Press animation - tween the icon group for visual feedback
+    btnBg.on('pointerdown', () => {
       scene.tweens.add({
-        targets: this.magnifierBtn,
-        scale: 0.85,
-        duration: 80,
-        yoyo: true,
-        ease: 'Back.easeOut',
-      });
-
-      // Optional subtle screen shake
-      const camera = scene.cameras.main;
-      scene.tweens.add({
-        targets: camera,
-        scrollX: camera.scrollX + Phaser.Math.Between(-2, 2),
-        scrollY: camera.scrollY + Phaser.Math.Between(-2, 2),
-        duration: 50,
-        repeat: 1,
+        targets: [btnBg, iconGroup],
+        scale: 0.9,
+        duration: 100,
         yoyo: true,
       });
-
       this.onMagnifierPressed?.();
     });
 
     // Hover effect
-    this.magnifierBtn.on('pointerover', () => {
+    btnBg.on('pointerover', () => {
       btnBg.setStrokeStyle(3, 0xaabbcc);
     });
-    this.magnifierBtn.on('pointerout', () => {
+    btnBg.on('pointerout', () => {
       btnBg.setStrokeStyle(3, 0x8888aa);
     });
 
-    this.uiContainer.add([this.magnifierGlow, btnBg, iconGroup, this.magnifierBtn]);
+    this.uiContainer.add([this.magnifierGlow, btnBg, iconGroup]);
   }
 
   /**
@@ -259,29 +246,21 @@ export class UIManager {
 
   /**
    * Updates the magnifier glow effect.
-   * Creates a pulsing aura when item is in range.
+   * Call every frame.
    */
   public updateMagnifierGlow(time: number): void {
     if (!this.magnifierGlow || !this.magnifierBtn) return;
 
     if (this.shouldGlow) {
       this.magnifierGlow.clear();
-
-      // Multi-layer glow with pulsing effect
-      const pulse = 0.3 + Math.sin(time / 150) * 0.15;
-      const brightness = 0.2 + Math.sin(time / 250) * 0.1;
-
-      // Outer glow (larger, dimmer)
-      this.magnifierGlow.fillStyle(0x00ff00, brightness * 0.4);
-      this.magnifierGlow.fillCircle(this.magnifierBtn.x, this.magnifierBtn.y, 65);
-
-      // Middle glow (medium, brighter)
-      this.magnifierGlow.fillStyle(0x00ff00, brightness * 0.6);
+      // Bright pulsing glow when item is in range
+      const glowIntensity = 0.4 + Math.sin(time / 150) * 0.2;
+      this.magnifierGlow.fillStyle(0x00ff00, glowIntensity);
       this.magnifierGlow.fillCircle(this.magnifierBtn.x, this.magnifierBtn.y, 55);
 
-      // Inner glow (bright, tight)
-      this.magnifierGlow.fillStyle(0x00ff00, pulse);
-      this.magnifierGlow.fillCircle(this.magnifierBtn.x, this.magnifierBtn.y, 45);
+      // Second glow layer for extra effect
+      this.magnifierGlow.fillStyle(0x00ff00, glowIntensity * 0.5);
+      this.magnifierGlow.fillCircle(this.magnifierBtn.x, this.magnifierBtn.y, 70);
     } else {
       this.magnifierGlow.clear();
     }
@@ -354,13 +333,13 @@ export class UIManager {
     const panelX = screenWidth / 2 - panelWidth / 2;
     const panelY = screenHeight / 2 - panelHeight / 2;
 
-    const panel = scene.add.rectangle(panelX + panelWidth / 2, panelY + panelHeight / 2, panelWidth, panelHeight, 0x2a2a3e);
+    const panel = scene.add.rectangle(panelX, panelY, panelWidth, panelHeight, 0x2a2a3e);
     panel.setStrokeStyle(2, 0x6666aa);
     panel.setOrigin(0);
 
     // Item name
     this.modalName = scene.add.text(panelX + 20, panelY + 20, '', {
-      fontFamily: 'GameFont, Arial, sans-serif',
+      fontFamily: 'Arial',
       fontSize: '24px',
       color: '#ffffff',
       fontStyle: 'bold',
@@ -368,7 +347,7 @@ export class UIManager {
 
     // Description
     this.modalDescription = scene.add.text(panelX + 20, panelY + 60, '', {
-      fontFamily: 'GameFont, Arial, sans-serif',
+      fontFamily: 'Arial',
       fontSize: '16px',
       color: '#cccccc',
       wordWrap: { width: panelWidth - 40 },
@@ -377,7 +356,7 @@ export class UIManager {
 
     // Close button
     const closeBtn = scene.add.text(panelX + panelWidth - 40, panelY + 10, '✕', {
-      fontFamily: 'GameFont, Arial, sans-serif',
+      fontFamily: 'Arial',
       fontSize: '24px',
       color: '#888888',
     });
@@ -416,15 +395,16 @@ export class UIManager {
     this.modalDescription.setText(item.description);
     this.modalContainer.setVisible(true);
 
-    // Fade and scale in animation
+    // Notify that modal is open (pause game)
+    this.onModalStateChanged?.(true);
+
+    // Fade in animation
     this.modalContainer.setAlpha(0);
-    this.modalContainer.setScale(0.8);
     scene.tweens.add({
       targets: this.modalContainer,
       alpha: 1,
-      scale: 1,
-      duration: 250,
-      ease: 'Back.easeOut',
+      duration: 200,
+      ease: 'Power2',
     });
   }
 
@@ -434,12 +414,14 @@ export class UIManager {
   public hideModal(scene: Phaser.Scene): void {
     if (!this.modalContainer) return;
 
+    // Notify that modal is closed (resume game)
+    this.onModalStateChanged?.(false);
+
     scene.tweens.add({
       targets: this.modalContainer,
       alpha: 0,
-      scale: 0.8,
-      duration: 200,
-      ease: 'Back.easeIn',
+      duration: 150,
+      ease: 'Power2',
       onComplete: () => {
         this.modalContainer?.setVisible(false);
       },
@@ -462,7 +444,7 @@ export class UIManager {
     // Message
     const message = won ? 'CASE SOLVED!' : "TIME'S UP!";
     const messageText = scene.add.text(screenWidth / 2, screenHeight / 2 - 40, message, {
-      fontFamily: 'GameFont, Arial, sans-serif',
+      fontFamily: 'Arial',
       fontSize: '48px',
       color: won ? '#00ff00' : '#ff4444',
       fontStyle: 'bold',
@@ -475,7 +457,7 @@ export class UIManager {
 
     // Score
     const scoreText = scene.add.text(screenWidth / 2, screenHeight / 2 + 30, `Found ${itemsFound}/${totalItems} items`, {
-      fontFamily: 'GameFont, Arial, sans-serif',
+      fontFamily: 'Arial',
       fontSize: '24px',
       color: '#ffffff',
       stroke: '#000000',

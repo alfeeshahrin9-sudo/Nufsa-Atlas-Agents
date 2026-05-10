@@ -1,9 +1,9 @@
 {
   "japan": {
-    "location": "Kyoto, Japan",
+    "location": "Autumn Forest",
     "timeLimitSeconds": 300,
     "requiredItems": 10,
-    "mapKey": "japan-map",
+    "mapKey": "autumn-map",
     "ambientAudioKey": "ambient-japan",
     "items": [
       {
@@ -12,6 +12,7 @@
         "description": "A white kimono with dark crimson stains on the sleeve. The fabric is torn near the hem.",
         "position": { "x": 150, "y": 80 },
         "spriteKey": "item_yukata",
+        "assetPath": "items/japanese-yukata.png",
         "collected": false
       },
       {
@@ -20,14 +21,7 @@
         "description": "An old samurai sword covered in rust. The handle wrapping has come loose.",
         "position": { "x": 450, "y": 120 },
         "spriteKey": "item_katana",
-        "collected": false
-      },
-      {
-        "id": "matcha",
-        "name": "Spilled Matcha",
-        "description": "A broken tea bowl with green powder scattered across the tatami.",
-        "position": { "x": 320, "y": 250 },
-        "spriteKey": "item_matcha",
+        "assetPath": "items/japanese-katana.png",
         "collected": false
       },
       {
@@ -36,54 +30,70 @@
         "description": "A decorative fan with cherry blossom patterns. Several ribs are broken.",
         "position": { "x": 700, "y": 200 },
         "spriteKey": "item_fan",
+        "assetPath": "items/japanese-fan.png",
         "collected": false
       },
       {
-        "id": "mask",
+        "id": "hat",
+        "name": "Straw Sugegasa",
+        "description": "A traveler's woven straw hat. The brim is frayed and stained with rain.",
+        "position": { "x": 320, "y": 250 },
+        "spriteKey": "item_hat",
+        "assetPath": "items/japanese-hat.png",
+        "collected": false
+      },
+      {
+        "id": "origami",
+        "name": "Folded Crane",
+        "description": "A delicate paper crane with a faded ink mark on one wing.",
+        "position": { "x": 550, "y": 150 },
+        "spriteKey": "item_origami",
+        "assetPath": "items/japanese-origami.png",
+        "collected": false
+      },
+      {
+        "id": "lantern",
+        "name": "Paper Lantern",
+        "description": "A chochin lantern, its washi paper torn and the candle long since burned out.",
+        "position": { "x": 150, "y": 400 },
+        "spriteKey": "item_lantern",
+        "assetPath": "items/japanese-lantern.png",
+        "collected": false
+      },
+      {
+        "id": "sake",
+        "name": "Sake Flask",
+        "description": "A ceramic tokkuri half-full of cold sake. A faint lipstick mark stains the rim.",
+        "position": { "x": 850, "y": 500 },
+        "spriteKey": "item_sake",
+        "assetPath": "items/japanese-sake.png",
+        "collected": false
+      },
+      {
+        "id": "daruma",
+        "name": "Daruma Doll",
+        "description": "A round red daruma with only one eye painted in. A wish left unfulfilled.",
+        "position": { "x": 780, "y": 620 },
+        "spriteKey": "item_daruma",
+        "assetPath": "items/japanese-daruma.png",
+        "collected": false
+      },
+      {
+        "id": "bonsai",
+        "name": "Toppled Bonsai",
+        "description": "A miniature pine in a cracked ceramic pot. Soil is spilled across the floor.",
+        "position": { "x": 400, "y": 650 },
+        "spriteKey": "item_bonsai",
+        "assetPath": "items/japanese-bonsai.png",
+        "collected": false
+      },
+      {
+        "id": "kitsune-mask",
         "name": "Kitsune Mask",
         "description": "A fox mask with cracks running through the left eye. Dried flowers are tucked into the straps.",
-        "position": { "x": 150, "y": 400 },
-        "spriteKey": "item_mask",
-        "collected": false
-      },
-      {
-        "id": "scroll",
-        "name": "Burnt Scroll",
-        "description": "An ancient scroll with singed edges. The calligraphy is barely legible.",
-        "position": { "x": 850, "y": 500 },
-        "spriteKey": "item_scroll",
-        "collected": false
-      },
-      {
-        "id": "coin",
-        "name": "Gold Koban",
-        "description": "A rare Edo-period gold coin. Someone has scratched a symbol into the surface.",
-        "position": { "x": 550, "y": 150 },
-        "spriteKey": "item_coin",
-        "collected": false
-      },
-      {
-        "id": "hairpin",
-        "name": "Jade Hairpin",
-        "description": "An ornate hairpin with a jade flower. One petal is chipped.",
-        "position": { "x": 780, "y": 620 },
-        "spriteKey": "item_hairpin",
-        "collected": false
-      },
-      {
-        "id": "bell",
-        "name": "Temple Bell",
-        "description": "A small bronze bell from a shrine. The clapper is missing.",
-        "position": { "x": 400, "y": 650 },
-        "spriteKey": "item_bell",
-        "collected": false
-      },
-      {
-        "id": "dagger",
-        "name": "Ceremonial Dagger",
-        "description": "A ritual knife with an ivory handle. Dark residue stains the blade.",
         "position": { "x": 650, "y": 400 },
-        "spriteKey": "item_dagger",
+        "spriteKey": "item_kitsune_mask",
+        "assetPath": "items/japanese-kitsune-mask.png",
         "collected": false
       }
     ]

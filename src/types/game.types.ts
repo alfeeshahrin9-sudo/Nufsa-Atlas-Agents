@@ -22,6 +22,8 @@ export interface ItemData {
   position: { x: number; y: number };
   /** Phaser texture key for the item sprite */
   spriteKey: string;
+  /** Path to the PNG asset under public/assets/ (e.g., "items/japanese-yukata.png"). If missing or fails to load, a placeholder is generated. */
+  assetPath?: string;
   /** Whether this item has been collected by the player */
   collected: boolean;
 }
@@ -194,8 +196,7 @@ export enum AssetKeys {
   MagnifierButton = 'magnifier-btn',
   PanelBackground = 'panel-bg',
 
-  // Items (dynamically loaded based on cases.json)
-  // Format: Item_<id>
+  // Items 
 
   // Audio
   AmbientJapan = 'ambient-japan',

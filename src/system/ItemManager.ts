@@ -42,7 +42,11 @@ export class ItemManager {
       // Create item sprite
       const sprite = scene.add.sprite(item.position.x, item.position.y, item.spriteKey);
       sprite.setDepth(5); // Above tiles, below player
-      sprite.setScale(0.7);
+      // Normalize on-screen size so PNGs of different native sizes
+      // (e.g., 24/32/64 px) all render at roughly one tile.
+      const targetSize = 28;
+      const naturalSize = Math.max(sprite.width, sprite.height) || targetSize;
+      sprite.setScale(targetSize / naturalSize);
       sprite.setAlpha(0.9);
       sprite.setAngle(Phaser.Math.Between(-15, 15)); // Slight random rotation
       sprite.setVisible(true); // Visible for player to find
@@ -91,90 +95,32 @@ export class ItemManager {
   }
 
   /**
-   * Detects items in a 1x3 tile area (96 pixels) in front of the player.
-   * Returns the closest item within detection range.
+   * Detects items in a 3x3 tile area centered on the player.
+   * The center tile is the player's tile; items in any of the 8 surrounding
+   * tiles also count. Returns the closest uncollected item, if any.
    */
-  public detect(
-    playerPos: Phaser.Math.Vector2,
-    facingAngle: number
-  ): DetectionResult {
+  public detectInArea(playerPos: Phaser.Math.Vector2): DetectionResult {
     const result: DetectionResult = {
       found: false,
       item: null,
       distance: Infinity,
     };
 
-    // Calculate detection area (1x3 tiles in front)
-    const detectionDistance = 96; // 3 tiles
-    const detectionWidth = 32; // 1 tile
-
-    // Direction vector based on facing angle
-    const dirX = Math.cos(facingAngle);
-    const dirY = Math.sin(facingAngle);
-
-    // Detection area center
-    const detectX = playerPos.x + dirX * detectionDistance;
-    const detectY = playerPos.y + dirY * detectionDistance;
-
-    for (const item of this.items) {
-      if (item.collected) continue;
-
-      const dx = item.position.x - detectX;
-      const dy = item.position.y - detectY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      // Check if item is within the 1x3 detection box
-      // Allow some tolerance for the width (1 tile = 32px, so +/- 16px)
-      if (distance <= detectionWidth / 2 + 16) {
-        // Also check that it's in front of player (not behind)
-        const dotProduct = dx * dirX + dy * dirY;
-        if (dotProduct > 0 && distance < result.distance) {
-          result.found = true;
-          result.item = item;
-          result.distance = distance;
-        }
-      }
-    }
-
-    return result;
-  }
-
-  /**
-   * Alternative detection using angle-based cone.
-   * More accurate for gameplay but slightly more expensive.
-   */
-  public detectInCone(
-    playerPos: Phaser.Math.Vector2,
-    facingAngle: number
-  ): DetectionResult {
-    const result: DetectionResult = {
-      found: false,
-      item: null,
-      distance: Infinity,
-    };
-
-    const coneAngleRad = Phaser.Math.DegToRad(this.config.coneAngle / 2);
+    // Tile size used for the conceptual 3x3 box (independent of the
+    // actual map's tile size — this is the gameplay reach knob).
+    const tileSize = 32;
+    const halfBox = (tileSize * 3) / 2; // ±48 px from player center
 
     for (const item of this.items) {
       if (item.collected) continue;
 
       const dx = item.position.x - playerPos.x;
       const dy = item.position.y - playerPos.y;
+
+      if (Math.abs(dx) > halfBox || Math.abs(dy) > halfBox) continue;
+
       const distance = Math.sqrt(dx * dx + dy * dy);
-
-      // Check if within range
-      if (distance > this.config.range) continue;
-
-      // Calculate angle to item
-      const angleToItem = Math.atan2(dy, dx);
-
-      // Normalize angle difference
-      let angleDiff = angleToItem - facingAngle;
-      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-
-      // Check if within cone
-      if (Math.abs(angleDiff) <= coneAngleRad && distance < result.distance) {
+      if (distance < result.distance) {
         result.found = true;
         result.item = item;
         result.distance = distance;

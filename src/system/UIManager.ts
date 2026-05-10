@@ -52,7 +52,7 @@ export class UIManager {
     const screenWidth = scene.scale.width;
 
     this.timerText = scene.add.text(screenWidth / 2, 20, '5:00', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial',
       fontSize: '32px',
       color: '#ffffff',
       stroke: '#000000',
@@ -83,7 +83,7 @@ export class UIManager {
 
     // Title
     const title = scene.add.text(20, panelY + 10, 'EVIDENCE', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial',
       fontSize: '14px',
       color: '#8888aa',
       fontStyle: 'bold',
@@ -128,7 +128,7 @@ export class UIManager {
       // Item name text
       const shortName = item.name.length > 10 ? item.name.substring(0, 9) + '…' : item.name;
       const nameText = scene.add.text(4, 4, shortName, {
-        fontFamily: 'Arial',
+        fontFamily: 'GameFont, Arial',
         fontSize: '11px',
         color: item.collected ? '#00ff00' : '#888888',
         fontStyle: item.collected ? 'bold' : 'normal',
@@ -136,7 +136,7 @@ export class UIManager {
 
       // Checkmark (visible when collected)
       const checkmark = scene.add.text(75, 2, item.collected ? '✓' : '', {
-        fontFamily: 'Arial',
+        fontFamily: 'GameFont, Arial',
         fontSize: '16px',
         color: '#00ff00',
         fontStyle: 'bold',
@@ -339,7 +339,7 @@ export class UIManager {
 
     // Item name
     this.modalName = scene.add.text(panelX + 20, panelY + 20, '', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial',
       fontSize: '24px',
       color: '#ffffff',
       fontStyle: 'bold',
@@ -347,7 +347,7 @@ export class UIManager {
 
     // Description
     this.modalDescription = scene.add.text(panelX + 20, panelY + 60, '', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial',
       fontSize: '16px',
       color: '#cccccc',
       wordWrap: { width: panelWidth - 40 },
@@ -356,7 +356,7 @@ export class UIManager {
 
     // Close button
     const closeBtn = scene.add.text(panelX + panelWidth - 40, panelY + 10, '✕', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial',
       fontSize: '24px',
       color: '#888888',
     });
@@ -429,6 +429,111 @@ export class UIManager {
   }
 
   /**
+   * Shows a celebration popup when an item is collected.
+   * Auto-dismisses after a short hold; calls onComplete after the out animation.
+   * Pauses gameplay via onModalStateChanged while visible.
+   */
+  public showItemPopup(scene: Phaser.Scene, item: ItemData, onComplete?: () => void): void {
+    const screenWidth = scene.scale.width;
+    const screenHeight = scene.scale.height;
+
+    const popupContainer = scene.add.container(0, 0);
+    popupContainer.setDepth(2500);
+    popupContainer.setScrollFactor(0);
+
+    // Dim backdrop. Made interactive so it swallows pointer input and
+    // prevents stray clicks (e.g., the magnifier button) during the popup.
+    const backdrop = scene.add.rectangle(0, 0, screenWidth, screenHeight, 0x000000, 0.6);
+    backdrop.setOrigin(0);
+    backdrop.setInteractive();
+    backdrop.setAlpha(0);
+
+    // Card sub-container so we can scale/fade everything as one from its center.
+    const card = scene.add.container(screenWidth / 2, screenHeight / 2);
+
+    const foundLabel = scene.add.text(0, -90, 'FOUND!', {
+      fontFamily: 'GameFont, Arial',
+      fontSize: '32px',
+      color: '#ffd700',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 5,
+    });
+    foundLabel.setOrigin(0.5);
+
+    // Big item sprite, normalized to a uniform display size regardless of
+    // source PNG dimensions (24/32/64).
+    const sprite = scene.add.sprite(0, 0, item.spriteKey);
+    const targetSize = 112;
+    const naturalSize = Math.max(sprite.width, sprite.height) || targetSize;
+    sprite.setScale(targetSize / naturalSize);
+
+    const nameText = scene.add.text(0, 90, item.name, {
+      fontFamily: 'GameFont, Arial',
+      fontSize: '24px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
+    });
+    nameText.setOrigin(0.5);
+
+    card.add([foundLabel, sprite, nameText]);
+    popupContainer.add([backdrop, card]);
+
+    // Pause gameplay via the same hook the description modal uses.
+    this.onModalStateChanged?.(true);
+
+    // Entry animation: card pops in with elastic ease, backdrop fades in.
+    card.setScale(0);
+    card.setAlpha(0);
+    scene.tweens.add({
+      targets: backdrop,
+      alpha: 0.6,
+      duration: 200,
+      ease: 'Cubic.easeOut',
+    });
+    scene.tweens.add({
+      targets: card,
+      scale: 1,
+      alpha: 1,
+      duration: 400,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        // Subtle bob on the sprite during the hold for a bit of life.
+        scene.tweens.add({
+          targets: sprite,
+          y: -10,
+          duration: 500,
+          yoyo: true,
+          ease: 'Sine.easeInOut',
+        });
+
+        // Hold ~1000ms, then pop out.
+        scene.time.delayedCall(1000, () => {
+          scene.tweens.add({
+            targets: card,
+            scale: 1.3,
+            alpha: 0,
+            duration: 300,
+            ease: 'Cubic.easeIn',
+          });
+          scene.tweens.add({
+            targets: backdrop,
+            alpha: 0,
+            duration: 300,
+            onComplete: () => {
+              popupContainer.destroy();
+              this.onModalStateChanged?.(false);
+              onComplete?.();
+            },
+          });
+        });
+      },
+    });
+  }
+
+  /**
    * Shows a game over message.
    */
   public showGameOver(scene: Phaser.Scene, won: boolean, itemsFound: number, totalItems: number): void {
@@ -444,7 +549,7 @@ export class UIManager {
     // Message
     const message = won ? 'CASE SOLVED!' : "TIME'S UP!";
     const messageText = scene.add.text(screenWidth / 2, screenHeight / 2 - 40, message, {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial',
       fontSize: '48px',
       color: won ? '#00ff00' : '#ff4444',
       fontStyle: 'bold',
@@ -457,7 +562,7 @@ export class UIManager {
 
     // Score
     const scoreText = scene.add.text(screenWidth / 2, screenHeight / 2 + 30, `Found ${itemsFound}/${totalItems} items`, {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial',
       fontSize: '24px',
       color: '#ffffff',
       stroke: '#000000',

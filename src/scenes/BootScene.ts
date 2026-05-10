@@ -22,7 +22,7 @@ export class BootScene extends Scene {
       this.scale.height / 2 - 50,
       'Loading...',
       {
-        fontFamily: 'Arial',
+        fontFamily: 'GameFont, Arial',
         fontSize: '24px',
         color: '#ffffff',
       }
@@ -62,15 +62,36 @@ export class BootScene extends Scene {
     // Store cases config
     this.casesConfig = casesData;
 
-    // Load Tiled map and tileset
-    this.load.tilemapTiledJSON('japan-map', 'assets/maps/map-japan.json');
-    this.load.image('tiles-japan', 'assets/tiles/tiles-japan.png');
+    // Load Tiled map and tileset.
+    // Japan map kept around for reference, swapped out for autumn forest.
+    // this.load.tilemapTiledJSON('japan-map', 'assets/maps/map-japan.json');
+    // this.load.image('tiles-japan', 'assets/tiles/tiles-japan.png');
+    this.load.tilemapTiledJSON('autumn-map', 'assets/maps/map-autumn.json');
+    this.load.image('autumn-tiles', 'assets/tiles/Autumn_Forest_Tiles.png');
+    this.load.image('autumn-objects', 'assets/tiles/Autumn_Forest_Objects.png');
 
-    // Load player spritesheet
-    this.load.spritesheet('player', 'assets/character/detective.png', {
-      frameWidth: 28,
-      frameHeight: 28,
+    // Load player animation frames (separate PNGs, side-view only).
+    // Frame keys are referenced by the animations created in create().
+    this.load.image('player-idle-1', 'assets/player/Idle(1).png');
+    this.load.image('player-idle-2', 'assets/player/Idle(2).png');
+    this.load.image('player-run-1', 'assets/player/Run(1).png');
+    this.load.image('player-run-2', 'assets/player/Run(2).png');
+    this.load.image('player-run-3', 'assets/player/Run(3).png');
+    this.load.image('player-run-4', 'assets/player/Run(4).png');
+
+    // Load item PNGs declared in cases.json. Failed loads fall back to
+    // generated placeholders in create() (see createPlaceholderTextures).
+    this.load.on('loaderror', (file: Phaser.Loader.File) => {
+      console.warn(`[BootScene] Asset failed to load: ${file.key} (${file.src})`);
     });
+    for (const caseId of Object.keys(this.casesConfig)) {
+      const items = this.casesConfig[caseId]?.items ?? [];
+      for (const item of items) {
+        if (item.assetPath && item.spriteKey) {
+          this.load.image(item.spriteKey, `assets/${item.assetPath}`);
+        }
+      }
+    }
 
     // Audio is optional - try to load but don't fail if missing
     this.load.audio('ambient-japan', 'assets/audio/ambient-japan.mp3');
@@ -84,11 +105,46 @@ export class BootScene extends Scene {
     // Generate all placeholder textures
     this.createPlaceholderTextures();
 
+    // Register player animations from the loaded PNG frames.
+    this.createPlayerAnimations();
+
     // Store cases config in registry for other scenes to access
     this.registry.set('casesConfig', this.casesConfig);
 
     // Start the game scene
     this.scene.start(SceneKeys.Game);
+  }
+
+  /**
+   * Registers idle and run animations for the player.
+   * Frames are individual image keys loaded in preload().
+   */
+  private createPlayerAnimations(): void {
+    if (!this.anims.exists('player-idle')) {
+      this.anims.create({
+        key: 'player-idle',
+        frames: [
+          { key: 'player-idle-1' },
+          { key: 'player-idle-2' },
+        ],
+        frameRate: 3,
+        repeat: -1,
+      });
+    }
+
+    if (!this.anims.exists('player-run')) {
+      this.anims.create({
+        key: 'player-run',
+        frames: [
+          { key: 'player-run-1' },
+          { key: 'player-run-2' },
+          { key: 'player-run-3' },
+          { key: 'player-run-4' },
+        ],
+        frameRate: 10,
+        repeat: -1,
+      });
+    }
   }
 
   /**
@@ -126,135 +182,36 @@ export class BootScene extends Scene {
     graphics.generateTexture('wall-tile', 32, 32);
 
     // ========================================================================
-    // Player character (detective)
+    // Item sprites — generate a simple placeholder ONLY for items whose PNG
+    // failed to load (or that have no assetPath). Real PNGs always win.
     // ========================================================================
-    graphics.clear();
-    // Body
-    graphics.fillStyle(0x4a5a7a, 1);
-    graphics.fillRect(8, 12, 16, 16);
-    // Head
-    graphics.fillStyle(0xffdbac, 1);
-    graphics.fillRect(10, 4, 12, 10);
-    // Hair
-    graphics.fillStyle(0x3a2a1a, 1);
-    graphics.fillRect(9, 2, 14, 6);
-    // Coat details
-    graphics.fillStyle(0x3a4a6a, 1);
-    graphics.fillRect(10, 14, 4, 12);
-    graphics.fillRect(18, 14, 4, 12);
-    // Generate texture
-    graphics.generateTexture('player', 32, 32);
-
-    // ========================================================================
-    // Item sprites (10 unique items with different colors/shapes)
-    // ========================================================================
-    const itemConfigs = [
-      { id: 'yukata', color: 0xff6b6b, shape: 'rectangle' },
-      { id: 'katana', color: 0xc0c0c0, shape: 'line' },
-      { id: 'matcha', color: 0x4ecdc4, shape: 'circle' },
-      { id: 'fan', color: 0xff6b9d, shape: 'fan' },
-      { id: 'mask', color: 0xffeead, shape: 'mask' },
-      { id: 'scroll', color: 0xd4a574, shape: 'scroll' },
-      { id: 'coin', color: 0xffd700, shape: 'coin' },
-      { id: 'hairpin', color: 0x96ceb4, shape: 'pin' },
-      { id: 'bell', color: 0xcd7f32, shape: 'bell' },
-      { id: 'dagger', color: 0x8b4513, shape: 'dagger' },
+    const placeholderPalette = [
+      0xff6b6b, 0xc0c0c0, 0x4ecdc4, 0xff6b9d, 0xffeead,
+      0xd4a574, 0xffd700, 0x96ceb4, 0xcd7f32, 0x8b4513,
     ];
-
-    for (const item of itemConfigs) {
-      graphics.clear();
-      const centerX = 12;
-      const centerY = 12;
-
-      switch (item.shape) {
-        case 'rectangle': // Yukata
-          graphics.fillStyle(item.color, 1);
-          graphics.fillRect(4, 4, 16, 16);
-          graphics.fillStyle(0x8b0000, 1); // Blood stain
-          graphics.fillRect(14, 8, 4, 6);
-          break;
-
-        case 'line': // Katana
-          graphics.fillStyle(item.color, 1);
-          graphics.fillRect(4, 10, 16, 4); // Blade
-          graphics.fillStyle(0x8b4513, 1);
-          graphics.fillRect(2, 8, 4, 8); // Handle
-          break;
-
-        case 'circle': // Matcha bowl
-          graphics.fillStyle(item.color, 1);
-          graphics.fillCircle(centerX, centerY, 8);
-          graphics.fillStyle(0x2d5a4a, 1); // Tea inside
-          graphics.fillCircle(centerX, centerY, 5);
-          break;
-
-        case 'fan':
-          graphics.fillStyle(item.color, 1);
-          graphics.fillTriangle(4, 12, 20, 8, 20, 16);
-          graphics.lineStyle(1, 0xffffff, 0.5);
-          graphics.moveTo(4, 12);
-          graphics.lineTo(20, 8);
-          graphics.moveTo(4, 12);
-          graphics.lineTo(20, 12);
-          graphics.moveTo(4, 12);
-          graphics.lineTo(20, 16);
-          graphics.strokePath();
-          break;
-
-        case 'mask': // Kitsune mask
-          graphics.fillStyle(item.color, 1);
-          graphics.fillEllipse(centerX, centerY, 14, 18);
-          graphics.fillStyle(0xff4444, 1); // Red markings
-          graphics.fillTriangle(8, 4, 12, 2, 16, 4);
-          graphics.fillTriangle(8, 20, 12, 22, 16, 20);
-          graphics.fillStyle(0x000000, 1); // Eyes
-          graphics.fillRect(8, 8, 3, 3);
-          graphics.fillRect(13, 8, 3, 3);
-          break;
-
-        case 'scroll':
-          graphics.fillStyle(item.color, 1);
-          graphics.fillRect(4, 2, 16, 20);
-          graphics.fillStyle(0x8b6f47, 1); // Scroll ends
-          graphics.fillRect(2, 2, 4, 4);
-          graphics.fillRect(2, 18, 4, 4);
-          graphics.fillRect(18, 2, 4, 4);
-          graphics.fillRect(18, 18, 4, 4);
-          break;
-
-        case 'coin': // Koban coin
-          graphics.fillStyle(item.color, 1);
-          graphics.fillEllipse(centerX, centerY, 12, 18);
-          graphics.lineStyle(2, 0xdaa520, 0.5);
-          graphics.strokeEllipse(centerX, centerY, 8, 14);
-          break;
-
-        case 'pin': // Hairpin
-          graphics.fillStyle(item.color, 1);
-          graphics.fillRect(10, 4, 4, 16);
-          graphics.fillStyle(0x228b22, 1); // Jade flower
-          graphics.fillCircle(12, 4, 5);
-          break;
-
-        case 'bell':
-          graphics.fillStyle(item.color, 1);
-          graphics.fillCircle(centerX, 10, 8);
-          graphics.fillRect(10, 18, 4, 4);
-          graphics.fillStyle(0x000000, 1);
-          graphics.fillCircle(centerX, 10, 3); // Hole
-          break;
-
-        case 'dagger':
-          graphics.fillStyle(item.color, 1); // Handle
-          graphics.fillRect(4, 10, 8, 6);
-          graphics.fillStyle(0x708090, 1); // Blade
-          graphics.fillTriangle(12, 10, 22, 13, 12, 16);
-          graphics.fillStyle(0x8b0000, 1); // Blood
-          graphics.fillRect(18, 12, 3, 3);
-          break;
+    let paletteIndex = 0;
+    for (const caseId of Object.keys(this.casesConfig)) {
+      const items = this.casesConfig[caseId]?.items ?? [];
+      for (const item of items) {
+        const key = item.spriteKey;
+        if (!key || this.textures.exists(key)) {
+          paletteIndex++;
+          continue;
+        }
+        const color = placeholderPalette[paletteIndex % placeholderPalette.length];
+        paletteIndex++;
+        graphics.clear();
+        // Solid colored disc with a darker ring — clearly a placeholder.
+        graphics.fillStyle(color, 1);
+        graphics.fillCircle(12, 12, 10);
+        graphics.lineStyle(2, 0x000000, 0.6);
+        graphics.strokeCircle(12, 12, 10);
+        // First letter of the id, drawn as a small dark square so it's
+        // visually distinct without needing a font baked in.
+        graphics.fillStyle(0x000000, 0.7);
+        graphics.fillRect(10, 10, 4, 4);
+        graphics.generateTexture(key, 24, 24);
       }
-
-      graphics.generateTexture(`item_${item.id}`, 24, 24);
     }
 
     // ========================================================================

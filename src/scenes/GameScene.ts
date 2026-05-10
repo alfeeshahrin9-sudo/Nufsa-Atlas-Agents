@@ -95,33 +95,70 @@ export class GameScene extends Scene {
    * Creates the game map from Tiled tilemap.
    */
   private createMap(): void {
-    // Load the Tiled map
-    this.tilemap = this.make.tilemap({ key: 'japan-map' });
-    const tileset = this.tilemap.addTilesetImage('tiles-japan', 'tiles-japan');
+    // -----------------------------------------------------------------------
+    // Japan map (kept for reference, currently disabled in favor of autumn)
+    // -----------------------------------------------------------------------
+    // this.tilemap = this.make.tilemap({ key: 'japan-map' });
+    // const tileset = this.tilemap.addTilesetImage('tiles-japan', 'tiles-japan');
+    // if (!tileset) {
+    //   console.error('Failed to add tileset image');
+    //   return;
+    // }
+    // const groundLayer = this.tilemap.createLayer('Ground', tileset, 0, 0);
+    // const behindLayer = this.tilemap.createLayer('Behind', tileset, 0, 0);
+    // const buildingsLayer = this.tilemap.createLayer('Buildings', tileset, 0, 0);
+    // const decorationsLayer = this.tilemap.createLayer('Decorations', tileset, 0, 0);
+    // if (groundLayer) groundLayer.setDepth(-2);
+    // if (behindLayer) behindLayer.setDepth(10);
+    // if (buildingsLayer) buildingsLayer.setDepth(0);
+    // if (decorationsLayer) decorationsLayer.setDepth(1);
+    // this.collisionLayer = this.tilemap.createLayer('Collision', tileset, 0, 0);
+    // if (this.collisionLayer) {
+    //   this.collisionLayer.setVisible(false);
+    //   this.collisionLayer.setCollisionByProperty({ collides: true });
+    //   this.collisionLayer.setCollisionByExclusion([-1, 0]);
+    // }
 
-    if (!tileset) {
-      console.error('Failed to add tileset image');
+    // -----------------------------------------------------------------------
+    // Autumn forest map (64x48 tiles at 16x16 px = 1024x768 world)
+    // -----------------------------------------------------------------------
+    this.tilemap = this.make.tilemap({ key: 'autumn-map' });
+    const tilesSet = this.tilemap.addTilesetImage('Autumn_Forest_Tiles', 'autumn-tiles');
+    const objectsSet = this.tilemap.addTilesetImage('Autumn_Forest_Objects', 'autumn-objects');
+    // The map JSON registers Autumn_Forest_Tiles a second time at firstgid
+    // 2401 (originally an external .tsx reference). Phaser needs an explicit
+    // mapping so the duplicate uses the already-loaded tiles image.
+    const tilesSet2 = this.tilemap.addTilesetImage('Autumn_Forest_Tiles_2', 'autumn-tiles');
+    if (!tilesSet || !objectsSet || !tilesSet2) {
+      console.error('Failed to add autumn tileset image(s)');
       return;
     }
+    // Layers can reference tiles from any set, so pass them all as an array.
+    const sets = [tilesSet, objectsSet, tilesSet2];
 
-    // Create all visible layers (Ground, Buildings, Behind are background)
-    const groundLayer = this.tilemap.createLayer('Ground', tileset, 0, 0);
-    const behindLayer = this.tilemap.createLayer('Behind', tileset, 0, 0);
-    const buildingsLayer = this.tilemap.createLayer('Buildings', tileset, 0, 0);
-    const decorationsLayer = this.tilemap.createLayer('Decorations', tileset, 0, 0);
+    // Each layer is created and assigned a render depth. Tunable knob: any
+    // layer that should render ABOVE the player (e.g., tall trees) gets a
+    // depth >= player depth (player is at depth 0).
+    const layerDepths: Array<{ name: string; depth: number }> = [
+      { name: 'Ground', depth: -2 },
+      { name: 'leaves', depth: -1 },
+      { name: 'Decorations', depth: 0 },
+      { name: 'objects', depth: 0 },
+      { name: 'extra smol deco', depth: 0 },
+      { name: 'extra extra smol deco', depth: 0 },
+      { name: 'Buildings', depth: 0 },
+      { name: 'smoll tree', depth: 10 },
+      { name: 'Behind', depth: 10 },
+    ];
+    for (const { name, depth } of layerDepths) {
+      const layer = this.tilemap.createLayer(name, sets, 0, 0);
+      if (layer) layer.setDepth(depth);
+    }
 
-    // Set depths for proper layering
-    if (groundLayer) groundLayer.setDepth(-2);
-    if (behindLayer) behindLayer.setDepth(10);
-    if (buildingsLayer) buildingsLayer.setDepth(0);
-    if (decorationsLayer) decorationsLayer.setDepth(1);
-
-    // Create collision layer from the Collision layer (tile ID 1311 = collision)
-    this.collisionLayer = this.tilemap.createLayer('Collision', tileset, 0, 0);
+    // Collision layer: invisible, every non-empty tile blocks movement.
+    this.collisionLayer = this.tilemap.createLayer('Collision', sets, 0, 0);
     if (this.collisionLayer) {
-      this.collisionLayer.setVisible(false); // Hide collision layer
-      this.collisionLayer.setCollisionByProperty({ collides: true });
-      // Set all non-zero tiles as collision (tile ID 1311)
+      this.collisionLayer.setVisible(false);
       this.collisionLayer.setCollisionByExclusion([-1, 0]);
     }
   }
@@ -134,7 +171,7 @@ export class GameScene extends Scene {
       startX: 300,
       startingY: 300,
       speed: 150,
-      spriteKey: 'player',
+      spriteKey: 'player-idle-1',
     });
 
     // Add collision with tilemap collision layer
@@ -200,23 +237,27 @@ export class GameScene extends Scene {
     // Play detection sound
     this.audio.playDetect();
 
-    // Get player position and facing direction
+    // Get player position
     const playerPos = this.player.getPosition();
-    const facingAngle = this.player.getFacingAngle();
 
-    // Detect items in cone
-    const detection = this.itemManager.detectInCone(playerPos, facingAngle);
+    // Detect items in a 3x3 tile area centered on the player
+    const detection = this.itemManager.detectInArea(playerPos);
 
     if (detection.found && detection.item) {
-      // Item found!
-      this.itemManager.collect(this, detection.item, () => {
-        this.ui?.updateItemEntry(detection.item!.id, true);
+      // Item found! Capture once so the closure isn't accessing the
+      // detection object after async tweens complete.
+      const collectedItem = detection.item;
+      this.itemManager.collect(this, collectedItem, () => {
         this.audio.playCollect();
-
-        // Check win condition
-        if (this.itemManager!.allItemsCollected()) {
-          this.endGame(true);
-        }
+        // Show celebration popup. Tick the bottom-bar entry and check win
+        // only after the popup closes, so the player sees the popup then
+        // sees the list update naturally.
+        this.ui?.showItemPopup(this, collectedItem, () => {
+          this.ui?.updateItemEntry(collectedItem.id, true);
+          if (this.itemManager!.allItemsCollected()) {
+            this.endGame(true);
+          }
+        });
       });
     }
   }
@@ -235,10 +276,9 @@ export class GameScene extends Scene {
     if (!this.player || !this.itemManager || !this.ui) return;
 
     const playerPos = this.player.getPosition();
-    const facingAngle = this.player.getFacingAngle();
 
     // Check if any item is in range for magnifier glow
-    const detection = this.itemManager.detectInCone(playerPos, facingAngle);
+    const detection = this.itemManager.detectInArea(playerPos);
     this.ui.setMagnifierGlow(detection.found);
   }
 

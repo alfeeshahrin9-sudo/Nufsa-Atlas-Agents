@@ -43,8 +43,13 @@ const config: Types.Core.GameConfig = {
   },
 };
 
-// Create and start the game
-const game = new Game(config);
+// Wait for the custom font to load before constructing the game so the
+// loading screen and all subsequent text render with GameFont from the
+// first frame (otherwise we get a brief flash of the fallback).
+const game = await document.fonts
+  .load('1em GameFont')
+  .catch((err) => console.warn('GameFont failed to load, falling back to Arial:', err))
+  .then(() => new Game(config));
 
 // Prevent context menu on right-click (kiosk mode)
 document.addEventListener('contextmenu', (event) => {

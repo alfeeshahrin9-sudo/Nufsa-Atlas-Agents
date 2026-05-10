@@ -99,7 +99,7 @@ export class ResultScene extends Scene {
     const iconSize = 80;
     const iconY = panelY + 50;
     const icon = this.add.text(width / 2, iconY, this.won ? '✓' : '✕', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial',
       fontSize: `${iconSize}px`,
       color: this.won ? '#00ff00' : '#ff4444',
     });
@@ -108,7 +108,7 @@ export class ResultScene extends Scene {
     // Result title
     const titleY = panelY + 140;
     const title = this.add.text(width / 2, titleY, this.won ? 'CASE SOLVED!' : "TIME'S UP!", {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial',
       fontSize: '28px',
       color: '#ffffff',
       fontStyle: 'bold',
@@ -118,7 +118,7 @@ export class ResultScene extends Scene {
     // Score display
     const scoreY = panelY + 190;
     const score = this.add.text(width / 2, scoreY, `${this.itemsFound} / ${this.totalItems}`, {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial',
       fontSize: '48px',
       color: this.won ? '#00ff00' : '#ff8888',
       fontStyle: 'bold',
@@ -128,7 +128,7 @@ export class ResultScene extends Scene {
     // Score label
     const scoreLabelY = panelY + 240;
     const scoreLabel = this.add.text(width / 2, scoreLabelY, 'ITEMS FOUND', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial',
       fontSize: '14px',
       color: '#888888',
       fontStyle: 'bold',
@@ -142,7 +142,7 @@ export class ResultScene extends Scene {
       const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
 
       const timeText = this.add.text(width / 2, panelY + 270, `Time: ${timeStr}`, {
-        fontFamily: 'Arial',
+        fontFamily: 'GameFont, Arial',
         fontSize: '16px',
         color: '#aaaaff',
       });
@@ -152,7 +152,7 @@ export class ResultScene extends Scene {
     // Restart countdown
     const countdownY = height - 40;
     const countdown = this.add.text(width / 2, countdownY, 'Restarting in 10...', {
-      fontFamily: 'Arial',
+      fontFamily: 'GameFont, Arial',
       fontSize: '16px',
       color: '#666666',
       fontStyle: 'italic',

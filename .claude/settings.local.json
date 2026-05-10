@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls public/assets/items/)",
+      "Bash(ls public/assets/)"
+    ]
+  }
+}

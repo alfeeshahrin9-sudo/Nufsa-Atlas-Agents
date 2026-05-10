@@ -25,10 +25,17 @@ export class PlayerController {
   public onItemCollected?: () => void;
 
   constructor(scene: Phaser.Scene, config: PlayerConfig) {
-    // Create player sprite
+    // Create player sprite. Origin is feet-anchored so the position
+    // represents the player's footing, which makes top-down depth sorting
+    // and collisions feel correct against tile-aligned objects.
     this.sprite = scene.add.sprite(config.startX, config.startingY, config.spriteKey);
     this.sprite.setDepth(0); // Render above tiles
-    this.sprite.setOrigin(0.5, 0.5);
+    this.sprite.setOrigin(0.5, 1.0);
+    // Source PNGs are 112x128; scale down to roughly 1.5 tiles tall.
+    this.sprite.setScale(0.4);
+
+    // Start the idle animation immediately so the sprite isn't a static frame.
+    this.sprite.anims.play('player-idle', true);
 
     // Initialize state
     this.state = {
@@ -43,8 +50,16 @@ export class PlayerController {
     // Setup touch joystick for touch input
     this.setupTouchJoystick(scene);
 
-    // Enable physics on sprite
+    // Enable physics on sprite. Tighten the body to a small box around the
+    // feet so the player doesn't collide with walls from far away.
     scene.physics.add.existing(this.sprite);
+    const body = this.sprite.body as Phaser.Physics.Arcade.Body;
+    const bodyW = 20;
+    const bodyH = 16;
+    body.setSize(bodyW, bodyH);
+    // With origin (0.5, 1.0), the sprite's top-left in texture space is
+    // (-width/2, -height). Center the small body just above the feet.
+    body.setOffset((this.sprite.width - bodyW) / 2, this.sprite.height - bodyH);
   }
 
   /**
@@ -191,10 +206,14 @@ export class PlayerController {
       // Apply movement
       const body = this.sprite.body as Phaser.Physics.Arcade.Body;
       body.setVelocity(velocity.x, velocity.y);
+
+      this.sprite.anims.play('player-run', true);
     } else {
       // Stop moving
       const body = this.sprite.body as Phaser.Physics.Arcade.Body;
       body.setVelocity(0, 0);
+
+      this.sprite.anims.play('player-idle', true);
     }
 
     // Keep player in bounds

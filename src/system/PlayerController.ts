@@ -25,14 +25,19 @@ export class PlayerController {
   public onItemCollected?: () => void;
 
   constructor(scene: Phaser.Scene, config: PlayerConfig) {
-    // Create player sprite. Origin is feet-anchored so the position
-    // represents the player's footing, which makes top-down depth sorting
-    // and collisions feel correct against tile-aligned objects.
+    // Create player sprite. Source PNGs are 112x128 with ~15px of
+    // transparent padding BELOW the visible feet. Anchoring the origin
+    // to the visible feet (texture y=112) — instead of the PNG bottom —
+    // keeps door/portal triggers and collisions aligned with what the
+    // player sees on screen.
+    const PNG_H = 128;
+    const VISIBLE_FEET_Y = 96; // bottom row of non-transparent pixels
+
     this.sprite = scene.add.sprite(config.startX, config.startingY, config.spriteKey);
     this.sprite.setDepth(0); // Render above tiles
-    this.sprite.setOrigin(0.5, 1.0);
+    this.sprite.setOrigin(0.5, VISIBLE_FEET_Y / PNG_H);
     // Source PNGs are 112x128; scale down to roughly 1.5 tiles tall.
-    this.sprite.setScale(0.4);
+    this.sprite.setScale(0.35);
 
     // Start the idle animation immediately so the sprite isn't a static frame.
     this.sprite.anims.play('player-idle', true);
@@ -50,16 +55,15 @@ export class PlayerController {
     // Setup touch joystick for touch input
     this.setupTouchJoystick(scene);
 
-    // Enable physics on sprite. Tighten the body to a small box around the
-    // feet so the player doesn't collide with walls from far away.
+    // Enable physics on sprite. Body is a small box at the visible feet
+    // (NOT the PNG bottom), so collisions land where the player sees them.
     scene.physics.add.existing(this.sprite);
     const body = this.sprite.body as Phaser.Physics.Arcade.Body;
     const bodyW = 20;
     const bodyH = 16;
     body.setSize(bodyW, bodyH);
-    // With origin (0.5, 1.0), the sprite's top-left in texture space is
-    // (-width/2, -height). Center the small body just above the feet.
-    body.setOffset((this.sprite.width - bodyW) / 2, this.sprite.height - bodyH);
+    // Body bottom aligned with visible feet → body top is bodyH above feet.
+    body.setOffset((this.sprite.width - bodyW) / 2, VISIBLE_FEET_Y - bodyH);
   }
 
   /**

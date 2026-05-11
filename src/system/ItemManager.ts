@@ -39,8 +39,8 @@ export class ItemManager {
     for (const item of this.items) {
       if (item.collected) continue;
 
-      // Create item sprite
-      const sprite = scene.add.sprite(item.position.x, item.position.y, item.spriteKey);
+      // Create item sprite (location.x/y are world pixels for map items).
+      const sprite = scene.add.sprite(item.location.x, item.location.y, item.spriteKey);
       sprite.setDepth(5); // Above tiles, below player
       // Normalize on-screen size so PNGs of different native sizes
       // (e.g., 24/32/64 px) all render at roughly one tile.
@@ -114,8 +114,8 @@ export class ItemManager {
     for (const item of this.items) {
       if (item.collected) continue;
 
-      const dx = item.position.x - playerPos.x;
-      const dy = item.position.y - playerPos.y;
+      const dx = item.location.x - playerPos.x;
+      const dy = item.location.y - playerPos.y;
 
       if (Math.abs(dx) > halfBox || Math.abs(dy) > halfBox) continue;
 

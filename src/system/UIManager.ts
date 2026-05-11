@@ -30,6 +30,17 @@ export class UIManager {
   /** Callback when modal is shown/hidden (for pause control) */
   public onModalStateChanged?: (isOpen: boolean) => void;
 
+  /** Callback when the travel (portal) button is pressed */
+  public onTravelPressed?: () => void;
+
+  /** Travel button (shown when player is on a HiddenMove tile) */
+  private travelBtnContainer: Phaser.GameObjects.Container | null = null;
+  private travelBtnLabel: Phaser.GameObjects.Text | null = null;
+
+  /** Room button (shown when player is on a Door / Water tile) */
+  private roomBtnContainer: Phaser.GameObjects.Container | null = null;
+  private roomBtnLabel: Phaser.GameObjects.Text | null = null;
+
   /** Whether the magnifier should glow (item in range) */
   private shouldGlow: boolean = false;
 
@@ -429,11 +440,198 @@ export class UIManager {
   }
 
   /**
-   * Shows a celebration popup when an item is collected.
-   * Auto-dismisses after a short hold; calls onComplete after the out animation.
-   * Pauses gameplay via onModalStateChanged while visible.
+   * Shows the travel button at the top-center of the screen with the
+   * given label. Idempotent — calling again with a different label just
+   * updates the text. The button stays visible until hideTravelButton().
+   */
+  public showTravelButton(scene: Phaser.Scene, label: string): void {
+    if (this.travelBtnContainer && this.travelBtnLabel) {
+      // Already shown — just refresh the label.
+      this.travelBtnLabel.setText(label);
+      return;
+    }
+
+    const screenWidth = scene.scale.width;
+    const btnY = 70; // Below the timer at the top.
+    const padX = 20;
+    const padY = 12;
+
+    const text = scene.add.text(0, 0, label, {
+      fontFamily: 'GameFont, Arial',
+      fontSize: '22px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
+    });
+    text.setOrigin(0.5);
+
+    const bgWidth = text.width + padX * 2;
+    const bgHeight = text.height + padY * 2;
+    const bg = scene.add.rectangle(0, 0, bgWidth, bgHeight, 0x4a3a2a, 0.95);
+    bg.setStrokeStyle(3, 0xffd700);
+    bg.setInteractive({ useHandCursor: true });
+
+    bg.on('pointerdown', () => {
+      // Quick squash for tactile feedback, then fire the callback.
+      scene.tweens.add({
+        targets: this.travelBtnContainer,
+        scale: 0.92,
+        duration: 80,
+        yoyo: true,
+        onComplete: () => this.onTravelPressed?.(),
+      });
+    });
+    bg.on('pointerover', () => bg.setStrokeStyle(3, 0xffffff));
+    bg.on('pointerout', () => bg.setStrokeStyle(3, 0xffd700));
+
+    const container = scene.add.container(screenWidth / 2, btnY, [bg, text]);
+    container.setScrollFactor(0);
+    container.setDepth(1500);
+
+    // Slide-down + fade in.
+    container.setAlpha(0);
+    container.y = btnY - 20;
+    scene.tweens.add({
+      targets: container,
+      alpha: 1,
+      y: btnY,
+      duration: 200,
+      ease: 'Cubic.easeOut',
+    });
+
+    this.travelBtnContainer = container;
+    this.travelBtnLabel = text;
+    this.uiContainer.add(container);
+  }
+
+  /**
+   * Hides and destroys the travel button (with a quick fade-out).
+   */
+  public hideTravelButton(): void {
+    if (!this.travelBtnContainer) return;
+    const container = this.travelBtnContainer;
+    this.travelBtnContainer = null;
+    this.travelBtnLabel = null;
+    container.scene.tweens.add({
+      targets: container,
+      alpha: 0,
+      y: container.y - 20,
+      duration: 150,
+      onComplete: () => container.destroy(),
+    });
+  }
+
+  /**
+   * Shows the room-entry button at the top-center, mirroring the travel
+   * button's visual style. Takes a per-call callback (action varies per
+   * door). Idempotent — calling again with a different label/callback
+   * just refreshes both.
+   */
+  public showRoomButton(scene: Phaser.Scene, label: string, onClick: () => void): void {
+    if (this.roomBtnContainer && this.roomBtnLabel) {
+      this.roomBtnLabel.setText(label);
+      // Re-bind the click handler. Easiest: tear down and recreate the bg.
+      const bg = this.roomBtnContainer.getAt(0) as Phaser.GameObjects.Rectangle;
+      if (bg) {
+        bg.removeAllListeners('pointerdown');
+        bg.on('pointerdown', () => onClick());
+      }
+      return;
+    }
+
+    const screenWidth = scene.scale.width;
+    const btnY = 70; // Same slot as travel button (mutually exclusive in practice).
+    const padX = 20;
+    const padY = 12;
+
+    const text = scene.add.text(0, 0, label, {
+      fontFamily: 'GameFont, Arial',
+      fontSize: '22px',
+      color: '#ffffff',
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
+    });
+    text.setOrigin(0.5);
+
+    const bgWidth = text.width + padX * 2;
+    const bgHeight = text.height + padY * 2;
+    const bg = scene.add.rectangle(0, 0, bgWidth, bgHeight, 0x2a3a5a, 0.95);
+    bg.setStrokeStyle(3, 0x88ccff);
+    bg.setInteractive({ useHandCursor: true });
+
+    bg.on('pointerdown', () => {
+      scene.tweens.add({
+        targets: this.roomBtnContainer,
+        scale: 0.92,
+        duration: 80,
+        yoyo: true,
+        onComplete: () => onClick(),
+      });
+    });
+    bg.on('pointerover', () => bg.setStrokeStyle(3, 0xffffff));
+    bg.on('pointerout', () => bg.setStrokeStyle(3, 0x88ccff));
+
+    const container = scene.add.container(screenWidth / 2, btnY, [bg, text]);
+    container.setScrollFactor(0);
+    container.setDepth(1500);
+
+    container.setAlpha(0);
+    container.y = btnY - 20;
+    scene.tweens.add({
+      targets: container,
+      alpha: 1,
+      y: btnY,
+      duration: 200,
+      ease: 'Cubic.easeOut',
+    });
+
+    this.roomBtnContainer = container;
+    this.roomBtnLabel = text;
+    this.uiContainer.add(container);
+  }
+
+  /**
+   * Hides and destroys the room button.
+   */
+  public hideRoomButton(): void {
+    if (!this.roomBtnContainer) return;
+    const container = this.roomBtnContainer;
+    this.roomBtnContainer = null;
+    this.roomBtnLabel = null;
+    container.scene.tweens.add({
+      targets: container,
+      alpha: 0,
+      y: container.y - 20,
+      duration: 150,
+      onComplete: () => container.destroy(),
+    });
+  }
+
+  /**
+   * Instance wrapper: shows the popup AND pauses gameplay (via the
+   * onModalStateChanged hook, which freezes the timer + player input).
    */
   public showItemPopup(scene: Phaser.Scene, item: ItemData, onComplete?: () => void): void {
+    this.onModalStateChanged?.(true);
+    UIManager.createItemPopup(scene, item, () => {
+      this.onModalStateChanged?.(false);
+      onComplete?.();
+    });
+  }
+
+  /**
+   * Static popup builder — usable from any scene without a UIManager
+   * instance (e.g. RoomScene). Pure visual: no pause/resume side effects.
+   * Auto-dismisses after a short hold; calls onComplete after the out
+   * animation finishes.
+   */
+  public static createItemPopup(
+    scene: Phaser.Scene,
+    item: ItemData,
+    onComplete?: () => void
+  ): void {
     const screenWidth = scene.scale.width;
     const screenHeight = scene.scale.height;
 
@@ -481,9 +679,6 @@ export class UIManager {
     card.add([foundLabel, sprite, nameText]);
     popupContainer.add([backdrop, card]);
 
-    // Pause gameplay via the same hook the description modal uses.
-    this.onModalStateChanged?.(true);
-
     // Entry animation: card pops in with elastic ease, backdrop fades in.
     card.setScale(0);
     card.setAlpha(0);
@@ -524,7 +719,6 @@ export class UIManager {
             duration: 300,
             onComplete: () => {
               popupContainer.destroy();
-              this.onModalStateChanged?.(false);
               onComplete?.();
             },
           });

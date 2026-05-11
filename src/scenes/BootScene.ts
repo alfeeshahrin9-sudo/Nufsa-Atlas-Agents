@@ -41,7 +41,7 @@ export class BootScene extends Scene {
 
     // Create loading bar
     const progressBar = this.add.rectangle(
-      this.scale.width / 2 - 145,
+      this.scale.width / 2 ,
       this.scale.height / 2 + 20,
       290,
       20,
@@ -62,13 +62,27 @@ export class BootScene extends Scene {
     // Store cases config
     this.casesConfig = casesData;
 
-    // Load Tiled map and tileset.
-    // Japan map kept around for reference, swapped out for autumn forest.
+    // Load Tiled maps + tilesets.
+    // Original japan map kept commented for reference.
     // this.load.tilemapTiledJSON('japan-map', 'assets/maps/map-japan.json');
-    // this.load.image('tiles-japan', 'assets/tiles/tiles-japan.png');
-    this.load.tilemapTiledJSON('autumn-map', 'assets/maps/map-autumn.json');
+    //
+    // Primary: Japan-2 (Kyoto District). Has a HiddenMove portal layer leading
+    // to autumn, plus Door1..Door4 layers triggering room views.
+    this.load.tilemapTiledJSON('japan-2-map', 'assets/maps/japan/map-japan-2.json');
+    this.load.image('tiles-japan', 'assets/tiles/tiles-japan.png');
+    // Travel destination: autumn forest. Loaded up-front so portal travel
+    // doesn't need a second BootScene pass.
+    this.load.tilemapTiledJSON('autumn-map', 'assets/maps/autumn/map-autumn.json');
     this.load.image('autumn-tiles', 'assets/tiles/Autumn_Forest_Tiles.png');
     this.load.image('autumn-objects', 'assets/tiles/Autumn_Forest_Objects.png');
+
+    // Room photos shown when the player enters a Door / Water interaction
+    // zone. Native sizes are large (3000-4000 px wide); RoomScene scrolls.
+    this.load.image('room-japan-1', 'assets/maps/japan/room-1.jpg');
+    this.load.image('room-japan-2', 'assets/maps/japan/room-2.jpg');
+    this.load.image('room-japan-3', 'assets/maps/japan/room-3.jpg');
+    this.load.image('room-japan-4', 'assets/maps/japan/room-4.jpg');
+    this.load.image('room-autumn-1', 'assets/maps/autumn/room-1.png');
 
     // Load player animation frames (separate PNGs, side-view only).
     // Frame keys are referenced by the animations created in create().
@@ -84,12 +98,13 @@ export class BootScene extends Scene {
     this.load.on('loaderror', (file: Phaser.Loader.File) => {
       console.warn(`[BootScene] Asset failed to load: ${file.key} (${file.src})`);
     });
-    for (const caseId of Object.keys(this.casesConfig)) {
-      const items = this.casesConfig[caseId]?.items ?? [];
-      for (const item of items) {
-        if (item.assetPath && item.spriteKey) {
-          this.load.image(item.spriteKey, `assets/${item.assetPath}`);
-        }
+    const globalItems = (this.casesConfig.items ?? []) as Array<{
+      spriteKey?: string;
+      assetPath?: string;
+    }>;
+    for (const item of globalItems) {
+      if (item.assetPath && item.spriteKey) {
+        this.load.image(item.spriteKey, `assets/${item.assetPath}`);
       }
     }
 
@@ -108,8 +123,11 @@ export class BootScene extends Scene {
     // Register player animations from the loaded PNG frames.
     this.createPlayerAnimations();
 
-    // Store cases config in registry for other scenes to access
-    this.registry.set('casesConfig', this.casesConfig);
+    // Store config in registry for other scenes (items[] + cases{}).
+    this.registry.set('gameConfig', this.casesConfig);
+
+    // Wipe any per-game travel state so a fresh boot starts a fresh game.
+    this.registry.remove('gameState');
 
     // Start the game scene
     this.scene.start(SceneKeys.Game);
@@ -190,28 +208,26 @@ export class BootScene extends Scene {
       0xd4a574, 0xffd700, 0x96ceb4, 0xcd7f32, 0x8b4513,
     ];
     let paletteIndex = 0;
-    for (const caseId of Object.keys(this.casesConfig)) {
-      const items = this.casesConfig[caseId]?.items ?? [];
-      for (const item of items) {
-        const key = item.spriteKey;
-        if (!key || this.textures.exists(key)) {
-          paletteIndex++;
-          continue;
-        }
-        const color = placeholderPalette[paletteIndex % placeholderPalette.length];
+    const placeholderItems = (this.casesConfig.items ?? []) as Array<{ spriteKey?: string }>;
+    for (const item of placeholderItems) {
+      const key = item.spriteKey;
+      if (!key || this.textures.exists(key)) {
         paletteIndex++;
-        graphics.clear();
-        // Solid colored disc with a darker ring — clearly a placeholder.
-        graphics.fillStyle(color, 1);
-        graphics.fillCircle(12, 12, 10);
-        graphics.lineStyle(2, 0x000000, 0.6);
-        graphics.strokeCircle(12, 12, 10);
-        // First letter of the id, drawn as a small dark square so it's
-        // visually distinct without needing a font baked in.
-        graphics.fillStyle(0x000000, 0.7);
-        graphics.fillRect(10, 10, 4, 4);
-        graphics.generateTexture(key, 24, 24);
+        continue;
       }
+      const color = placeholderPalette[paletteIndex % placeholderPalette.length];
+      paletteIndex++;
+      graphics.clear();
+      // Solid colored disc with a darker ring — clearly a placeholder.
+      graphics.fillStyle(color, 1);
+      graphics.fillCircle(12, 12, 10);
+      graphics.lineStyle(2, 0x000000, 0.6);
+      graphics.strokeCircle(12, 12, 10);
+      // First letter of the id, drawn as a small dark square so it's
+      // visually distinct without needing a font baked in.
+      graphics.fillStyle(0x000000, 0.7);
+      graphics.fillRect(10, 10, 4, 4);
+      graphics.generateTexture(key, 24, 24);
     }
 
     // ========================================================================

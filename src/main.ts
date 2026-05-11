@@ -2,6 +2,7 @@ import { Game, Types } from 'phaser';
 import { BootScene } from './scenes/BootScene';
 import { GameScene } from './scenes/GameScene';
 import { ResultScene } from './scenes/ResultScene';
+import { RoomScene } from './scenes/RoomScene';
 
 /**
  * Phaser game configuration for the Hidden Object Detective game.
@@ -30,6 +31,7 @@ const config: Types.Core.GameConfig = {
     BootScene,
     GameScene,
     ResultScene,
+    RoomScene,
   ],
   // Disable multi-touch gestures that could interfere with kiosk mode
   input: {

@@ -8,8 +8,23 @@
 // ============================================================================
 
 /**
+ * Where an item lives in the game world.
+ *  - type "map":  on a tilemap; (x, y) are world pixels in that map.
+ *    `area` is the case id (e.g. "japan-2", "autumn").
+ *  - type "room": inside a room photo opened from RoomScene; (x, y) are
+ *    pixel coords within the room image. `area` is the room image key
+ *    (e.g. "room-japan-1").
+ */
+export interface ItemLocation {
+  type: 'map' | 'room';
+  area: string;
+  x: number;
+  y: number;
+}
+
+/**
  * Represents a collectible item in the game world.
- * Items are positioned at specific coordinates and can be detected/collected.
+ * Items live in a global list and know where they belong via `location`.
  */
 export interface ItemData {
   /** Unique identifier for this item (e.g., "yukata", "katana") */
@@ -18,8 +33,8 @@ export interface ItemData {
   name: string;
   /** Description text shown when player clicks the item in the list */
   description: string;
-  /** World position where the item is placed */
-  position: { x: number; y: number };
+  /** Where this item lives (which map or room, and where within it) */
+  location: ItemLocation;
   /** Phaser texture key for the item sprite */
   spriteKey: string;
   /** Path to the PNG asset under public/assets/ (e.g., "items/japanese-yukata.png"). If missing or fails to load, a placeholder is generated. */
@@ -33,30 +48,28 @@ export interface ItemData {
 // ============================================================================
 
 /**
- * Represents a complete case/level configuration.
- * Loaded from cases.json at game start.
+ * Represents a single map / level configuration. Items are stored in a
+ * separate global list and reference their case via `location.area`.
  */
 export interface CaseData {
   /** Location name (e.g., "Kyoto, Japan") */
   location: string;
   /** Time limit in seconds for the case */
   timeLimitSeconds: number;
-  /** Number of items required to win */
-  requiredItems: number;
-  /** All items that can be found in this case */
-  items: ItemData[];
   /** Key for the map asset to load */
   mapKey: string;
   /** Optional ambient audio track key */
   ambientAudioKey?: string;
+  /** Case ID to travel to when player presses the travel button while standing on a HiddenMove tile. */
+  portalDestination?: string;
 }
 
 /**
- * Structure of the cases.json file.
- * Maps case IDs to their configurations.
+ * Top-level shape of cases.json. Items are global; cases are map config.
  */
-export interface CasesConfig {
-  [caseId: string]: CaseData;
+export interface GameConfig {
+  items: ItemData[];
+  cases: { [caseId: string]: CaseData };
 }
 
 // ============================================================================
@@ -174,6 +187,7 @@ export enum SceneKeys {
   Boot = 'BootScene',
   Game = 'GameScene',
   Result = 'ResultScene',
+  Room = 'RoomScene',
 }
 
 // ============================================================================

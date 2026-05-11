@@ -1,101 +1,100 @@
 {
-  "japan": {
-    "location": "Autumn Forest",
-    "timeLimitSeconds": 300,
-    "requiredItems": 10,
-    "mapKey": "autumn-map",
-    "ambientAudioKey": "ambient-japan",
-    "items": [
-      {
-        "id": "yukata",
-        "name": "Bloody Yukata",
-        "description": "A white kimono with dark crimson stains on the sleeve. The fabric is torn near the hem.",
-        "position": { "x": 150, "y": 80 },
-        "spriteKey": "item_yukata",
-        "assetPath": "items/japanese-yukata.png",
-        "collected": false
-      },
-      {
-        "id": "katana",
-        "name": "Rusted Katana",
-        "description": "An old samurai sword covered in rust. The handle wrapping has come loose.",
-        "position": { "x": 450, "y": 120 },
-        "spriteKey": "item_katana",
-        "assetPath": "items/japanese-katana.png",
-        "collected": false
-      },
-      {
-        "id": "fan",
-        "name": "Torn Paper Fan",
-        "description": "A decorative fan with cherry blossom patterns. Several ribs are broken.",
-        "position": { "x": 700, "y": 200 },
-        "spriteKey": "item_fan",
-        "assetPath": "items/japanese-fan.png",
-        "collected": false
-      },
-      {
-        "id": "hat",
-        "name": "Straw Sugegasa",
-        "description": "A traveler's woven straw hat. The brim is frayed and stained with rain.",
-        "position": { "x": 320, "y": 250 },
-        "spriteKey": "item_hat",
-        "assetPath": "items/japanese-hat.png",
-        "collected": false
-      },
-      {
-        "id": "origami",
-        "name": "Folded Crane",
-        "description": "A delicate paper crane with a faded ink mark on one wing.",
-        "position": { "x": 550, "y": 150 },
-        "spriteKey": "item_origami",
-        "assetPath": "items/japanese-origami.png",
-        "collected": false
-      },
-      {
-        "id": "lantern",
-        "name": "Paper Lantern",
-        "description": "A chochin lantern, its washi paper torn and the candle long since burned out.",
-        "position": { "x": 150, "y": 400 },
-        "spriteKey": "item_lantern",
-        "assetPath": "items/japanese-lantern.png",
-        "collected": false
-      },
-      {
-        "id": "sake",
-        "name": "Sake Flask",
-        "description": "A ceramic tokkuri half-full of cold sake. A faint lipstick mark stains the rim.",
-        "position": { "x": 850, "y": 500 },
-        "spriteKey": "item_sake",
-        "assetPath": "items/japanese-sake.png",
-        "collected": false
-      },
-      {
-        "id": "daruma",
-        "name": "Daruma Doll",
-        "description": "A round red daruma with only one eye painted in. A wish left unfulfilled.",
-        "position": { "x": 780, "y": 620 },
-        "spriteKey": "item_daruma",
-        "assetPath": "items/japanese-daruma.png",
-        "collected": false
-      },
-      {
-        "id": "bonsai",
-        "name": "Toppled Bonsai",
-        "description": "A miniature pine in a cracked ceramic pot. Soil is spilled across the floor.",
-        "position": { "x": 400, "y": 650 },
-        "spriteKey": "item_bonsai",
-        "assetPath": "items/japanese-bonsai.png",
-        "collected": false
-      },
-      {
-        "id": "kitsune-mask",
-        "name": "Kitsune Mask",
-        "description": "A fox mask with cracks running through the left eye. Dried flowers are tucked into the straps.",
-        "position": { "x": 650, "y": 400 },
-        "spriteKey": "item_kitsune_mask",
-        "assetPath": "items/japanese-kitsune-mask.png",
-        "collected": false
-      }
-    ]
+  "items": [
+    {
+      "id": "yukata",
+      "name": "Bloody Yukata",
+      "description": "A white kimono with dark crimson stains on the sleeve. The fabric is torn near the hem.",
+      "spriteKey": "item_yukata",
+      "assetPath": "items/japanese-yukata.png",
+      "location": { "type": "map", "area": "japan-2", "x": 150, "y": 80 }
+    },
+    {
+      "id": "katana",
+      "name": "Rusted Katana",
+      "description": "An old samurai sword covered in rust. The handle wrapping has come loose.",
+      "spriteKey": "item_katana",
+      "assetPath": "items/japanese-katana.png",
+      "location": { "type": "room", "area": "room-japan-1", "x": 1200, "y": 800 }
+    },
+    {
+      "id": "fan",
+      "name": "Torn Paper Fan",
+      "description": "A decorative fan with cherry blossom patterns. Several ribs are broken.",
+      "spriteKey": "item_fan",
+      "assetPath": "items/japanese-fan.png",
+      "location": { "type": "room", "area": "room-japan-2", "x": 1500, "y": 800 }
+    },
+    {
+      "id": "hat",
+      "name": "Straw Sugegasa",
+      "description": "A traveler's woven straw hat. The brim is frayed and stained with rain.",
+      "spriteKey": "item_hat",
+      "assetPath": "items/japanese-hat.png",
+      "location": { "type": "room", "area": "room-japan-3", "x": 1700, "y": 1000 }
+    },
+    {
+      "id": "origami",
+      "name": "Folded Crane",
+      "description": "A delicate paper crane with a faded ink mark on one wing.",
+      "spriteKey": "item_origami",
+      "assetPath": "items/japanese-origami.png",
+      "location": { "type": "room", "area": "room-autumn-1", "x": 1100, "y": 400 }
+    },
+    {
+      "id": "lantern",
+      "name": "Paper Lantern",
+      "description": "A chochin lantern, its washi paper torn and the candle long since burned out.",
+      "spriteKey": "item_lantern",
+      "assetPath": "items/japanese-lantern.png",
+      "location": { "type": "room", "area": "room-autumn-1", "x": 2300, "y": 400 }
+    },
+    {
+      "id": "sake",
+      "name": "Sake Flask",
+      "description": "A ceramic tokkuri half-full of cold sake. A faint lipstick mark stains the rim.",
+      "spriteKey": "item_sake",
+      "assetPath": "items/japanese-sake.png",
+      "location": { "type": "room", "area": "room-japan-1", "x": 2400, "y": 1500 }
+    },
+    {
+      "id": "daruma",
+      "name": "Daruma Doll",
+      "description": "A round red daruma with only one eye painted in. A wish left unfulfilled.",
+      "spriteKey": "item_daruma",
+      "assetPath": "items/japanese-daruma.png",
+      "location": { "type": "room", "area": "room-japan-2", "x": 2200, "y": 1300 }
+    },
+    {
+      "id": "bonsai",
+      "name": "Toppled Bonsai",
+      "description": "A miniature pine in a cracked ceramic pot. Soil is spilled across the floor.",
+      "spriteKey": "item_bonsai",
+      "assetPath": "items/japanese-bonsai.png",
+      "location": { "type": "room", "area": "room-japan-4", "x": 1200, "y": 1500 }
+    },
+    {
+      "id": "kitsune-mask",
+      "name": "Kitsune Mask",
+      "description": "A fox mask with cracks running through the left eye. Dried flowers are tucked into the straps.",
+      "spriteKey": "item_kitsune_mask",
+      "assetPath": "items/japanese-kitsune-mask.png",
+      "location": { "type": "map", "area": "autumn", "x": 500, "y": 400 }
+    }
+  ],
+  "cases": {
+    "japan-2": {
+      "location": "Kyoto District",
+      "timeLimitSeconds": 300,
+      "mapKey": "japan-2-map",
+      "ambientAudioKey": "ambient-japan",
+      "portalDestination": "autumn"
+    },
+    "autumn": {
+      "location": "Autumn Forest",
+      "timeLimitSeconds": 300,
+      "mapKey": "autumn-map",
+      "ambientAudioKey": "ambient-japan",
+      "portalDestination": "japan-2"
+    }
   }
 }
